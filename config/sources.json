@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "name": "Miningpool Observer",
+      "url": "wss://stratum.miningpool.observer/jobs",
+      "type": "observer",
+      "mode": "ws"
+    },
+    {
+      "name": "Stratum Work",
+      "url": "https://stratum.work/api/stream",
+      "type": "stratum_work",
+      "mode": "sse"
+    }
+  ]
+}
