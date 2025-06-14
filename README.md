@@ -37,13 +37,18 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
-### 4. Run backend server
+### 4. Install aiohttp dependency
+```bash
+pip install aiohttp
+```
+
+### 5. Run backend server
 ```bash
 python run.py 
 
 or python3 in some cases
 ```
-### 5. Example dashboard
+### 6. Example dashboard
 I have provided an example dashboard which you can access at:
 ```bash
 http://localhost:8000
