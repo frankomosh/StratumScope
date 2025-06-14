@@ -30,7 +30,7 @@ async def differences():
 
 def start_server():
     import threading
-    import yaml
+    # import yaml
 
     with open("config/sources.json") as f:
         config = json.load(f)
