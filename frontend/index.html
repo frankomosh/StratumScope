@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratum Monitor Comparison</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-card: #f9fafb;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #e5e7eb;
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #0d0d0d;
+            --bg-card: #262626;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #404040;
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        section {
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .info-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: var(--bg-card);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background-color: var(--bg-card);
+        }
+
+        .job-source {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0 10px;
+            font-size: 1.1rem;
+        }
+
+        .hash {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .hash-match {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .hash-mismatch {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .diff-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .diff-item.critical {
+            border-left-color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .highlight {
+            animation: pulse 2s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card.good {
+            border-color: var(--success-color);
+        }
+
+        .stat-card.bad {
+            border-color: var(--danger-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Mobile optimization */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.2rem;
+            }
+
+            .theme-toggle {
+                position: static;
+                margin-top: 15px;
+            }
+
+            section {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            table {
+                font-size: 0.75rem;
+            }
+
+            th, td {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⛏️ Stratum Monitor Comparison</h1>
+            <p class="subtitle">Real-time comparison of stratum monitoring tools</p>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </header>
+
+        <div id="alerts"></div>
+
+        <section>
+            <h2>ℹ️ What We're Monitoring</h2>
+            <div class="info-box">
+                <p><strong>✅ Previous Block Hash (prevhash)</strong>: Should be IDENTICAL across sources - confirms same blockchain state</p>
+                <p><strong>🔄 Job IDs</strong>: Always DIFFERENT between sources - this is normal and expected</p>
+                <p><strong>⚠️ Important</strong>: We only alert on prevhash mismatches, which could indicate sources seeing different chains</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>📊 Live Statistics</h2>
+            <div id="stats" class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-jobs">0</div>
+                    <div class="stat-label">Total Jobs</div>
+                </div>
+                <div class="stat-card" id="hash-status-card">
+                    <div class="stat-value" id="hash-status">Checking...</div>
+                    <div class="stat-label">Prevhash Status</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="sources-active">0</div>
+                    <div class="stat-label">Active Sources</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📈 Job Activity</h2>
+            <div class="chart-container">
+                <canvas id="jobChart"></canvas>
+            </div>
+        </section>
+
+        <section>
+            <h2>⚠️ Critical Differences</h2>
+            <div id="diffs">
+                <p>Monitoring for prevhash differences...</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>📋 Latest Jobs</h2>
+            <div id="jobs">
+                <p>Loading jobs...</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        console.log('Stratum Monitor starting...');
+        
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        });
+        
+        // Global variables
+        let lastPrevhashAlert = 0;
+        let jobChart = null;
+        let totalJobs = 0;
+        let criticalDiffs = [];
+        
+        // Initialize chart with dark mode support
+        function initChart() {
+            console.log('Initializing chart...');
+            const ctx = document.getElementById('jobChart');
+            if (!ctx) {
+                console.error('Chart canvas not found!');
+                return;
+            }
+            
+            // Chart colors that work in both themes
+            const chartColors = {
+                grid: 'rgba(128, 128, 128, 0.1)',
+                text: 'rgba(128, 128, 128, 0.8)'
+            };
+            
+            jobChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Jobs in Cache',
+                        data: [],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: chartColors.text
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: chartColors.grid
+                            },
+                            ticks: {
+                                color: chartColors.text
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: chartColors.grid
+                            },
+                            ticks: {
+                                color: chartColors.text
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Chart initialized');
+        }
+        
+        // Compare prevhashes across sources
+        function comparePrevhashes(jobs) {
+            const prevhashes = {};
+            const sources = Object.keys(jobs);
+            
+            for (const [source, jobList] of Object.entries(jobs)) {
+                if (jobList && jobList.length > 0) {
+                    const latestJob = jobList[jobList.length - 1];
+                    if (latestJob && latestJob.prevhash) {
+                        prevhashes[source] = latestJob.prevhash;
+                    }
+                }
+            }
+            
+            const uniqueHashes = [...new Set(Object.values(prevhashes))];
+            const allMatch = uniqueHashes.length <= 1;
+            
+            return { allMatch, prevhashes, uniqueHashes };
+        }
+        
+        // Main update function
+        async function updateData() {
+            console.log('Fetching data...');
+            
+            try {
+                // Fetch jobs
+                const jobsResp = await fetch('/api/jobs');
+                const jobs = await jobsResp.json();
+                console.log('Jobs data:', jobs);
+                
+                // Check prevhash consistency
+                const hashComparison = comparePrevhashes(jobs);
+                
+                // Update hash status
+                const hashStatusCard = document.getElementById('hash-status-card');
+                const hashStatus = document.getElementById('hash-status');
+                
+                if (Object.keys(jobs).length < 2) {
+                    hashStatus.textContent = 'Waiting...';
+                    hashStatusCard.className = 'stat-card';
+                } else if (hashComparison.allMatch) {
+                    hashStatus.textContent = '✅ Match';
+                    hashStatusCard.className = 'stat-card good';
+                } else {
+                    hashStatus.textContent = '❌ Mismatch!';
+                    hashStatusCard.className = 'stat-card bad';
+                    
+                    // Alert for prevhash mismatch (only once per minute)
+                    const now = Date.now();
+                    if (now - lastPrevhashAlert > 60000) {
+                        lastPrevhashAlert = now;
+                        const alertDiv = document.getElementById('alerts');
+                        alertDiv.innerHTML = '<div class="alert alert-danger">⚠️ CRITICAL: Previous block hash mismatch detected! Sources may be on different chains!</div>';
+                        setTimeout(() => {
+                            alertDiv.innerHTML = '';
+                        }, 10000);
+                    }
+                }
+                
+                // Update jobs display
+                const jobsDiv = document.getElementById('jobs');
+                let jobsHTML = '';
+                let sourcesActive = 0;
+                totalJobs = 0;
+                
+                // Prepare chart data
+                const labels = [];
+                const data = [];
+                
+                for (const [source, jobList] of Object.entries(jobs)) {
+                    if (jobList && jobList.length > 0) {
+                        sourcesActive++;
+                        totalJobs += jobList.length;
+                        
+                        // Add to chart data
+                        labels.push(source);
+                        data.push(jobList.length);
+                        
+                        // Build HTML
+                        jobsHTML += `<div class="job-source">${source}</div>`;
+                        jobsHTML += '<table><thead><tr><th>Job ID</th><th>Previous Block Hash</th><th>Time</th></tr></thead><tbody>';
+                        
+                        // Show last 5 jobs
+                        const recentJobs = jobList.slice(-5).reverse();
+                        for (const job of recentJobs) {
+                            const time = new Date(job.timestamp * 1000).toLocaleTimeString();
+                            const hashClass = hashComparison.allMatch ? 'hash-match' : 
+                                             (job.prevhash === hashComparison.uniqueHashes[0] ? 'hash' : 'hash-mismatch');
+                            
+                            jobsHTML += `
+                                <tr>
+                                    <td>${job.job_id || 'N/A'}</td>
+                                    <td class="hash ${hashClass}">${job.prevhash ? job.prevhash.substring(0, 20) + '...' : 'N/A'}</td>
+                                    <td>${time}</td>
+                                </tr>
+                            `;
+                        }
+                        
+                        jobsHTML += '</tbody></table>';
+                    }
+                }
+                
+                jobsDiv.innerHTML = jobsHTML || '<p>No jobs received yet...</p>';
+                
+                // Update chart
+                if (jobChart && labels.length > 0) {
+                    jobChart.data.labels = labels;
+                    jobChart.data.datasets[0].data = data;
+                    jobChart.update();
+                }
+                
+                // Fetch differences
+                const diffsResp = await fetch('/api/differences');
+                const diffs = await diffsResp.json();
+                console.log('Differences data:', diffs);
+                
+                // Filter for critical differences (prevhash mismatches)
+                const diffsDiv = document.getElementById('diffs');
+                let criticalDiffsHTML = '';
+                let foundCritical = false;
+                
+                if (diffs.length > 0) {
+                    const recentDiffs = diffs.slice(-20).reverse();
+                    
+                    for (const diff of recentDiffs) {
+                        // Checks if this difference includes prevhash info
+                        // Since the backend doesn't track prevhash diffs separately,
+                        // we'll note when sources have different job patterns
+                        const time = new Date(diff.timestamp * 1000).toLocaleString();
+                        
+                        // For now, just show all differences but note they're job ID differences
+                        criticalDiffsHTML += `
+                            <div class="diff-item">
+                                <strong>${diff.source_1}</strong> vs <strong>${diff.source_2}</strong><br>
+                                Job ID differences (expected): ${diff.difference.slice(0, 3).join(', ')}${diff.difference.length > 3 ? '...' : ''}<br>
+                                <small>${time}</small>
+                            </div>
+                        `;
+                    }
+                }
+                
+                if (!hashComparison.allMatch && Object.keys(hashComparison.prevhashes).length > 1) {
+                    foundCritical = true;
+                    criticalDiffsHTML = `
+                        <div class="diff-item critical highlight">
+                            <strong>⚠️ PREVHASH MISMATCH DETECTED!</strong><br>
+                            ${Object.entries(hashComparison.prevhashes).map(([source, hash]) => 
+                                `${source}: ${hash.substring(0, 20)}...`
+                            ).join('<br>')}<br>
+                            <small>${new Date().toLocaleString()}</small>
+                        </div>
+                    ` + criticalDiffsHTML;
+                }
+                
+                diffsDiv.innerHTML = criticalDiffsHTML || '<p>No critical differences detected. Job ID differences are normal and expected.</p>';
+                
+                // Update statistics
+                document.getElementById('total-jobs').textContent = totalJobs;
+                document.getElementById('sources-active').textContent = sourcesActive;
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('alerts').innerHTML = '<div class="alert alert-danger">Error loading data. Check console.</div>';
+            }
+        }
+        
+        // Start when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, initializing...');
+            initChart();
+            updateData();
+            
+            // Update every 3 seconds
+            setInterval(updateData, 3000);
+        });
+    </script>
+</body>
+</html>
