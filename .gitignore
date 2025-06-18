@@ -8,5 +8,6 @@ env/
 *.egg-info/
 .venv/
 
+node_modules/
 
 
