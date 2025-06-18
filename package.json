@@ -1,0 +1,11 @@
+{
+  "name": "stratum-monitor",
+  "version": "1.0.0",
+  "description": "Stratum Job Monitor Comparison Tool",
+  "scripts": {
+    "start": "npx serve -s ./frontend -l $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  }
+}
