@@ -1,6 +1,7 @@
 flask
 flask-cors
-fastapi
+gunicorn
 uvicorn
 websockets
 aiohttp
+pyyaml
