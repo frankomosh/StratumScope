@@ -1,5 +1,5 @@
 """
-Notic: This file is kept this file for developers who want to run the FastAPI backend standalone.
+Notic: This file has been left here intentionally for developers who want to run the FastAPI backend standalone.
 In the current setup, Flask (`app.py`) wraps this server and serves both frontend and API.
 """
 
