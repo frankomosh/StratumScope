@@ -1,45 +1,31 @@
 from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
-import subprocess
-import threading
 import os
+from pathlib import Path
+
+from src.server import bp as backend_bp  # import the backend blueprint
 
 app = Flask(__name__)
 CORS(app)
 
-# Serve the frontend
-@app.route('/')
+# Register backend routes
+app.register_blueprint(backend_bp)
+
+# Serve frontend
+frontend_dir = Path(__file__).parent / "frontend"
+
+@app.route("/")
 def index():
-    return send_from_directory('frontend', 'index.html')
+    return send_from_directory(frontend_dir, "index.html")
 
-@app.route('/<path:path>')
+@app.route("/<path:path>")
 def static_files(path):
-    return send_from_directory('frontend', path)
+    return send_from_directory(frontend_dir, path)
 
-# API endpoints
-@app.route('/api/health')
+@app.route("/api/health")
 def health():
     return jsonify({"status": "healthy", "backend": "running"})
 
-# stratum data endpoints here
-@app.route('/api/stratum-data')
-def stratum_data():
-    # logic to get stratum data
-    return jsonify({"message": "Backend is working!"})
-
-# existing run.py logic
-def run_backend():
-    try:
-        # Import and run existing backend logic
-        import run
-    except Exception as e:
-        print(f"Error running backend: {e}")
-
-# Start backend in a thread
-backend_thread = threading.Thread(target=run_backend)
-backend_thread.daemon = True
-backend_thread.start()
-
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
