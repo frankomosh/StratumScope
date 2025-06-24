@@ -1,4 +1,4 @@
-## Blockstream Analyzer
+## StratumScope
 
 This is a monitoring and comparison tool for Stratum job broadcasts from multiple Bitcoin mining pools. From this miners can detect job inconsistencies in real-time.
 
